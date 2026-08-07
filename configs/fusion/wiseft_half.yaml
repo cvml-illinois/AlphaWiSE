@@ -1,0 +1,16 @@
+# Fixed coefficient baseline: every one of the 499 tensors is blended at the same alpha,
+# with no fitting at all. The three published baselines differ only in source.reg, so
+# select one with --set fusion.source.reg.method=... and the matching root.
+includes: [fusion/_base.yaml]
+fusion:
+  # The one knob of this baseline, and it reaches the blend: --set fusion.alpha=0.7
+  # produces a 0.7 blend. fit.epochs must stay 0; there is nothing to fit.
+  alpha: 0.5
+  source:
+    # Plastic endpoint (theta_un), multiplied by alpha.
+    un: {method: normal, root: "${checkpoints.registry.forward.normal.root}"}
+    # Stability endpoint (theta_reg), multiplied by 1 - alpha.
+    reg: {method: ewc, root: "${checkpoints.registry.forward.ewc.root}"}
+  fit:
+    # No dataset, no loss, no optimizer.
+    epochs: 0

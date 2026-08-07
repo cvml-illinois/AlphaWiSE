@@ -1,0 +1,102 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alphawise"
+version = "1.0.0"
+description = "Adaptive weight interpolation for continual multimodal representation learning"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "Qiran Hu" },
+  { name = "Sarthak Jain" },
+]
+classifiers = [
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# Floors are behavioural, not cosmetic: each one is the oldest release in which an API this
+# package actually calls behaves the way the published checkpoints were produced under. The
+# original runs used cluster-module builds of torch and torchvision with no PyPI
+# equivalent, so the floors below, not a lockfile, are the environment contract.
+dependencies = [
+  # 2.6 flipped torch.load's weights_only default to True; the checkpoints are pure tensor
+  # state dicts and were written and read back under that strict default.
+  # torch.func.functional_call, which the fusion path is built on, needs >=2.0.
+  "torch>=2.6",
+  # Only the v1 transforms API is used (Compose/Resize/CenterCrop/ToTensor/Normalize).
+  # 0.21 is the release paired with torch 2.6; pip picks the ABI-matched build.
+  "torchvision>=0.21",
+  # Ceiling from numba, pulled in transitively by librosa, which caps at numpy<2.5.
+  # Without it the first numpy 2.5 release makes this project unresolvable.
+  "numpy>=1.24,<2.5",
+  # The image pipeline passes the legacy Image.BICUBIC integer constant, restored as an
+  # alias in Pillow 9.4 and still present today.
+  "pillow>=10.0",
+  # Audio loading only: librosa.load(path, sr=44100, mono=True). soundfile is deliberately
+  # not listed; nothing calls it directly, and librosa requires it anyway.
+  "librosa>=0.10",
+  # One call: scipy.signal.get_window for the FBSP spectrogram window.
+  "scipy>=1.10",
+  # Two coloured status prints in the audio branch.
+  "termcolor>=2.0",
+  "tqdm>=4.60",
+  # CLIP's BPE tokenizer: ftfy.fix_text plus regex's unicode character classes.
+  "ftfy>=6.0",
+  "regex>=2022.1.18",
+  # configs/ is YAML, so this is core even though the model code never touches it.
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Figure rendering. Nothing in the training or evaluation path imports matplotlib.
+figures = ["matplotlib>=3.7"]
+# The t-SNE figure. sklearn.manifold.TSNE is the only symbol used, and every call site
+# also plots, so this group supersets `figures`.
+analysis = ["matplotlib>=3.7", "scikit-learn>=1.3"]
+# Experiment tracking, off unless an entity is configured explicitly.
+wandb = ["wandb>=0.16"]
+dev = ["ruff>=0.4"]
+all = ["alphawise[analysis,wandb]"]
+
+[project.urls]
+Repository = "https://github.com/cvml-illinois/AlphaWiSE"
+Issues = "https://github.com/cvml-illinois/AlphaWiSE/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["alphawise*"]
+# _import holds a verbatim snapshot of the pre-release tree whose top-level packages are
+# named `model`, `utils` and `stats`. Installing those would shadow real distributions for
+# every other project sharing the environment.
+exclude = ["_import*", "configs*", "docs*", "results*", "scripts*", "tests*"]
+
+[tool.ruff]
+line-length = 100
+# The vendored upstream trees are kept close to their sources on purpose; linting them
+# would demand edits this repository deliberately does not make. See licenses/README.md.
+extend-exclude = [
+  "_import",
+  "alphawise/models/clip",
+  "alphawise/models/esresnet",
+  "alphawise/models/audioclip.py",
+  "alphawise/utils/simple_tokenizer.py",
+  "alphawise/utils/transforms.py",
+  "alphawise/_interfaces.py",
+]
+
+[tool.ruff.lint]
+# Correctness rules only: undefined names, unused imports, syntax-level mistakes. Style
+# and modernization rules stay off so the gate never argues taste with a reproduction.
+select = ["E4", "E7", "E9", "F"]
+# E731/E741: one documented lambda and single-letter locals in metric code.
+ignore = ["E731", "E741"]
+
+[tool.ruff.lint.per-file-ignores]
+# Package inits re-export their submodules' names.
+"**/__init__.py" = ["F401", "F403"]

@@ -1,0 +1,21 @@
+method:
+  name: der
+  der:
+    lambda_aux: 1.0
+    lambda_sparse: 1.0e-5
+    prune_ratio: 0.3
+    pruned_filename: model_weights_pruned.pth
+
+train:
+  optimizer:
+    name: adamw
+    lr: 5.0e-5
+    betas: [0.9, 0.999]
+    weight_decay: 0.01
+    # The logit-scale group's weight decay is fixed at 0.0 in the loop, not configured.
+    scale_group:
+      enabled: true
+      lr: 1.0e-6
+  ddp:
+    # The frozen teacher makes the graph fixed across iterations.
+    static_graph: true

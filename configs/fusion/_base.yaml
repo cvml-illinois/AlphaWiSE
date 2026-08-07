@@ -1,0 +1,67 @@
+# Shared settings for post hoc interpolation of two frozen checkpoints.
+#
+# source.un is the plastic endpoint, weighted by alpha; source.reg is the stability
+# endpoint, weighted by 1 - alpha. The slot is a role, not a method: EWC is the plastic
+# endpoint of the ewc_lwf pair. That orientation is what reproduces the published fused
+# checkpoints bit exactly, so it is not a free choice.
+includes: [checkpoints/registry_840.yaml]
+
+fusion:
+  # One sigmoid bounded coefficient per parameter tensor, 499 of them. Per layer and per
+  # group parameterizations were tried and are not what the paper reports.
+  # Where fitting starts: beta = 0, alpha = 0.5 for every tensor.
+  init_alpha: 0.5
+  # Fixed-coefficient (WiSE-FT) baseline switch: a value in (0, 1) blends every tensor
+  # at that constant, reaches the blend directly, and requires fit.epochs: 0. null means
+  # the coefficients are fitted instead.
+  alpha: null
+  phases: [1, 2, 3, 4, 5, 6, 7]
+
+  source:
+    # Plastic endpoint (theta_un), multiplied by alpha.
+    un: {method: null, root: null}
+    # Stability endpoint (theta_reg), multiplied by 1 - alpha.
+    reg: {method: null, root: null}
+    filename: model_weights_epoch_30.pth
+
+  fit:
+    # Which retrieval directions the coefficient objective sees. Each is symmetric, so
+    # a2t optimizes audio to text and text to audio together.
+    # One of: joint, a2t, i2a, i2t.
+    directions: joint
+    # 150 epochs and batch size 128 are the settings that produced the published
+    # coefficients. An earlier in-repo port used 30 epochs at batch size 192 and cannot
+    # reproduce them, which is easy to miss because the coefficient math is identical.
+    epochs: 150
+    batch_size: 128
+    # Adam; the optimizer identity is fixed in alphawise/fusion/fit.py.
+    optimizer:
+      lr: 1.0e-3
+    # The objective actually minimized divides the summed symmetric cross entropies by
+    # factorial(number of modalities) and adds an unnormalized time frequency term
+    # whenever audio is present. That is not the mean of directed losses the paper
+    # writes, and it is what every published number was produced with, so it is the
+    # default. paper_eq3 implements the paper's normalization; the time frequency term
+    # has no off switch, so legacy is audio_ttf_term's only accepted value and names the
+    # asymmetry instead of hiding it.
+    loss_normalization: legacy_audioclip  # or: paper_eq3
+    audio_ttf_term: legacy
+
+  data:
+    memory_size: "${continual.memory.size}"
+    # The coefficients are fitted on the exemplar memory plus a class balanced draw of
+    # memory_size / phase samples from the current phase, 1680 samples at phase 1 down
+    # to 960 at phase 7. The paper's Eq. 3 understates this fitting set; see
+    # alphawise/data/fusion_memory.py.
+    balance_current: true
+    # The published runs drew the current phase sample unseeded and cannot be reproduced
+    # bit exactly; 42 makes new runs repeatable. null restores the historical unseeded
+    # behaviour.
+    seed: 42
+
+  output:
+    # Written under the --out-dir passed to python -m alphawise.fusion.fit, one
+    # phase_<n> subdirectory per phase. The model filename is the one the checkpoint
+    # registry expects for every fused run.
+    model_filename: learnable_wiseft_model.pth
+    alphas_filename: learned_alphas.pth

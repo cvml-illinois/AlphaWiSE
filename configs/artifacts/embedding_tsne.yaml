@@ -1,0 +1,48 @@
+# Figure 4: image to text embedding structure, three base methods against their fused
+# counterparts, at the last phase.
+includes: [checkpoints/registry_840.yaml]
+
+artifact:
+  id: embedding_tsne
+  paper_ref: "Figure 4, image to text embedding structure"
+
+  provenance: reconstructed
+  provenance_notes:
+    - "The published figure exists only as a PDF: no point coordinates or class list were
+       kept, and the class selection was made by hand."
+    - "Neither the per class sample draw nor the projection was seeded in the run that
+       produced it, so the published layout cannot be reproduced exactly. Both are seeded
+       here (subset seed 42, projection random_state inside the module), which makes new
+       runs reproducible and the old one unmatchable."
+    - "Grid shape and sampling live in alphawise/analysis/tsne.py: 12 classes at 25
+       samples per class, one column per --column argument, two rows per column (base
+       checkpoint, fused checkpoint). tsne_points.csv is written beside the panels so a
+       rerun can be diffed without reading pixels."
+
+  steps:
+    - name: plot
+      command: >-
+        python -m alphawise.analysis.tsne
+        --img-root ${data.eval.img_root}
+        --wav-root ${data.eval.wav_root}
+        --meta-csv ${data.eval.meta_csv}
+        --ontology ${data.ontology}
+        --pair i2t
+        --seed 42
+        --column EWC=${checkpoints.registry.forward.ewc.root}/phase_7/model_weights_epoch_30.pth,${checkpoints.registry.forward.alphawise_n_ewc.root}/phase_7/${checkpoints.alphawise_filename}
+        --column iCaRL=${checkpoints.registry.forward.icarl.root}/phase_7/model_weights_epoch_30.pth,${checkpoints.registry.forward.alphawise_n_icarl.root}/phase_7/${checkpoints.alphawise_filename}
+        --column LwF=${checkpoints.registry.forward.lwf.root}/phase_7/model_weights_epoch_30.pth,${checkpoints.registry.forward.alphawise_n_lwf.root}/phase_7/${checkpoints.alphawise_filename}
+        --out ${results.root}/embedding_tsne/tsne_i2t.pdf
+        --out ${results.root}/embedding_tsne/tsne_i2t.png
+      inputs:
+        - "${paths.assets_root}/ViT_CLIP.pt"
+        - "${paths.assets_root}/ESRNXFBSP.pt"
+        - "${paths.assets_root}/bpe_simple_vocab_16e6.txt.gz"
+        - "${data.eval.img_root}"
+        - "${data.eval.wav_root}"
+        - "${data.eval.meta_csv}"
+        - "${data.ontology}"
+      outputs:
+        - "${results.root}/embedding_tsne/tsne_i2t.pdf"
+        - "${results.root}/embedding_tsne/tsne_i2t.png"
+        - "${results.root}/embedding_tsne/tsne_points.csv"

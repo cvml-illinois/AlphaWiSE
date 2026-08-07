@@ -1,0 +1,12 @@
+# The EWC+LwF pair. EWC is the plastic endpoint here: the un/reg slots are roles, not
+# methods, and this pair is the proof. The published run of this pair used the reverse
+# class ordering (ewc_lwf_reverse.yaml, which builds on this file); the forward pairing
+# below appears in no paper table.
+includes: [fusion/_base.yaml]
+fusion:
+  source:
+    # Plastic endpoint (theta_un), multiplied by alpha: EWC, a regularized method in the
+    # plastic slot.
+    un: {method: ewc, root: "${checkpoints.registry.forward.ewc.root}"}
+    # Stability endpoint (theta_reg), multiplied by 1 - alpha.
+    reg: {method: lwf, root: "${checkpoints.registry.forward.lwf.root}"}

@@ -1,0 +1,33 @@
+# Figure 3: retention curves, accuracy against phase, one panel per retrieval direction.
+includes: [artifacts/main_comparison.yaml]
+
+artifact:
+  id: retention_curves
+  paper_ref: "Figure 3, retention curves at 840 exemplars"
+
+  # The renderer is fully offline and deterministic, but it draws Table 1's numbers and
+  # therefore inherits Table 1's provenance. Run the table1 artifact first: this one
+  # consumes its curves CSV rather than paying for a second evaluation pass.
+  provenance: reconstructed
+  provenance_notes:
+    - "The three gaps quoted in the caption were recomputed from the source curves and
+       agree to four decimals, so the caption is checkable even though the underlying
+       numbers are a transcription."
+    - "Series styling and legend labels come from alphawise/analysis/curves.py and
+       alphawise/naming.py, the same tables the renderer of Table 1 reads, so the legend
+       cannot drift from the table rows."
+
+  steps:
+    - name: plot
+      command: >-
+        python -m alphawise.analysis.curves
+        --curves ${results.root}/main_comparison/phase_curves_840.csv
+        --out-dir ${results.root}/retention_curves
+        --basename 840_paper
+        --class-order forward
+      inputs: ["${results.root}/main_comparison/phase_curves_840.csv"]
+      outputs:
+        - "${results.root}/retention_curves/840_paper_r1.pdf"
+        - "${results.root}/retention_curves/840_paper_r1.png"
+        - "${results.root}/retention_curves/840_paper_map.pdf"
+        - "${results.root}/retention_curves/840_paper_map.png"

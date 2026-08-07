@@ -1,0 +1,16 @@
+method:
+  name: cclip
+  cclip:
+    lora_rank: 16
+    lora_alpha: 32
+    lora_dropout: 0.1
+    # End of phase merge of the adapter back into the frozen backbone.
+    merge_alpha: 0.5
+    ckc_lambda: 1.0
+    ckc_tau: 0.07
+    projector_hidden: 512
+
+train:
+  freeze:
+    # The adapter decides what is frozen, so the global switch must stay off.
+    partial_training: false

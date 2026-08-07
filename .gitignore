@@ -1,0 +1,41 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ruff_cache/
+.pytest_cache/
+
+# Payload directories ship only their README; everything else in them is fetched,
+# generated, or produced by runs on your machine. Patterns are anchored to the repo
+# root where an unanchored form would also match source directories (alphawise/data/,
+# configs/checkpoints/).
+assets/*
+!assets/README.md
+/data/*
+!/data/README.md
+!/data/synthetic/
+/data/synthetic/*
+!/data/synthetic/README.md
+/checkpoints*/*
+!/checkpoints/README.md
+/results/*
+!/results/README.md
+
+# Run outputs
+/runs/
+/outputs/
+/log/
+wandb/
+*.pth
+*.ckpt
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Verbatim source snapshot used as a diff reference during the rebuild.
+# Never committed: it carries cluster paths and author names. Deleted before release.
+_import/

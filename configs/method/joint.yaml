@@ -1,0 +1,11 @@
+# Joint upper bound: all 632 classes at once, no phase splitting. Intended to delegate
+# to the normal trainer with the phase index disabled (run_phase's phase=None path), but
+# no "joint" entry exists in train/methods' _METHODS, so this config fails loudly at
+# dispatch instead of training. Register the method there, or delete this file and the
+# row it implies, before relying on it.
+method:
+  name: joint
+
+train:
+  freeze:
+    partial_training: true

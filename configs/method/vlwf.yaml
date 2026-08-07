@@ -1,0 +1,10 @@
+# Variance regularized LwF. Same trainer as LwF (train/methods maps vlwf onto
+# LwFMethod); only the distillation weight differs, 0.8 against LwF's 0.1. The
+# temperature keeps LwFMethod's default of 2.0.
+method:
+  name: vlwf
+  vlwf:
+    # Reaches LwFMethod as a constructor kwarg through the method.<name> lookup.
+    # _OVERRIDES in alphawise/train/methods/__init__.py holds the same 0.8 as a
+    # fallback for documents without this key; explicit kwargs win over it.
+    distill_lambda: 0.8

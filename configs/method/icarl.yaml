@@ -1,0 +1,13 @@
+method:
+  name: icarl
+  icarl:
+    distill_lambda: 1.0
+    memory_filename: icarl_memory.pt
+    feature_batch_size: 64
+    # Herding never ran for the published checkpoints: the continual datasets expose no
+    # sample loader, so selection always fell back to the path only path. The release
+    # implements herding, but it stays off by default so the paper numbers reproduce.
+    legacy_memory: true
+    distill_start_phase: 2
+    memory_size: "${continual.memory.size}"
+    legacy_distillation: true

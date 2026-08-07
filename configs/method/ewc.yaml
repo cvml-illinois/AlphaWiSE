@@ -1,0 +1,22 @@
+method:
+  name: ewc
+  ewc:
+    scaling: 0.8
+    fisher_batches: 500
+    fisher_eps: 1.0e-3
+    fisher_clamp_max: 1.0e+4
+    fisher_filename: fisher.pt
+    # The Fisher diagonal is computed once per phase and cached beside the checkpoint.
+    reuse_cached_fisher: true
+
+# EWC is the one method that does not use the project standard SGD.
+train:
+  optimizer:
+    name: adamw
+    lr: 5.0e-5
+    betas: [0.9, 0.999]
+    weight_decay: 0.01
+    # The logit-scale group's weight decay is fixed at 0.0 in the loop, not configured.
+    scale_group:
+      enabled: true
+      lr: 1.0e-6

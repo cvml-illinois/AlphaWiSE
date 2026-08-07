@@ -1,0 +1,7 @@
+includes: [fusion/_base.yaml]
+fusion:
+  source:
+    # Plastic endpoint (theta_un), multiplied by alpha.
+    un: {method: normal, root: "${checkpoints.registry.forward.normal.root}"}
+    # Stability endpoint (theta_reg), multiplied by 1 - alpha.
+    reg: {method: ewc, root: "${checkpoints.registry.forward.ewc.root}"}

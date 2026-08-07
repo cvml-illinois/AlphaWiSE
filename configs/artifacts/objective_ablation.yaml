@@ -1,0 +1,106 @@
+# Table 2: the same fused pair refitted under four coefficient objectives, evaluated on
+# all three retrieval directions.
+includes: [checkpoints/registry_840.yaml, fusion/normal_ewc.yaml]
+
+artifact:
+  id: objective_ablation
+  paper_ref: "Table 2, cross objective results"
+
+  provenance: reconstructed
+  provenance_notes:
+    - "The joint row and the three single direction rows were fitted at different batch
+       sizes, 128 against 64. The objective is contrastive, so batch size sets the number
+       of in batch negatives: the table varies the fitting objective and the negative
+       count together. This is a property of the published table, not of this
+       configuration, and it is encoded here rather than smoothed over."
+    - "The joint row is numerically the AlphaWiSE (N+EWC) row of Table 1 and inherits its
+       reconstructed batch size."
+    - "The objective the fitting code minimizes divides the summed symmetric cross
+       entropies by factorial(number of modalities) and adds an unnormalized time
+       frequency term whenever audio is present. The i2t row is therefore the only one
+       with no time frequency term, and none of the rows is the plain mean of directed
+       losses the manuscript writes. fusion.fit.loss_normalization=paper_eq3 selects the
+       manuscript's objective instead."
+    - "Rerunning all four rows at one batch size is the honest comparison. Use
+       --set fusion.fit.batch_size=<n> to do it; the published ordering is not guaranteed
+       to survive."
+
+  # Per row: the objective overlay, the batch size it was fitted at, and where that batch
+  # size comes from.
+  rows:
+    - id: joint
+      overlay: fusion/objective_joint.yaml
+      epochs: 150
+      batch_size: 128
+      provenance: reconstructed
+      evidence: "Same run as Table 1's AlphaWiSE (N+EWC) row; no training log survives."
+    - id: a2t
+      overlay: fusion/objective_a2t.yaml
+      epochs: 150
+      batch_size: 64
+      provenance: log_verified
+      evidence: "Training log holds 1050 epoch lines and progress bars of
+        26/19/17/16/15/15/15 batches, the counts implied by batch size 64."
+    - id: i2a
+      overlay: fusion/objective_i2a.yaml
+      epochs: 150
+      batch_size: 64
+      provenance: log_verified
+      evidence: "Same log family as the a2t row, same batch counts."
+    - id: i2t
+      overlay: fusion/objective_i2t.yaml
+      epochs: 150
+      batch_size: 64
+      provenance: log_verified
+      evidence: "Same log family as the a2t row, same batch counts."
+
+  # The row contract for the render step, read through --config. Keys match the
+  # registry's objective run entries.
+  methods:
+    - alphawise_n_ewc_obj_joint
+    - alphawise_n_ewc_obj_a2t
+    - alphawise_n_ewc_obj_i2a
+    - alphawise_n_ewc_obj_i2t
+
+  steps:
+    # One fit per objective row, each into its own run directory so the four rows can
+    # never overwrite each other. {phase} is expanded by the fitter itself.
+    - name: fit_coefficients
+      foreach: rows
+      command: >-
+        python -m alphawise.fusion.fit
+        --config configs/fusion/normal_ewc.yaml
+        --config configs/{item.overlay}
+        --set fusion.fit.batch_size={item.batch_size}
+        --set fusion.fit.epochs={item.epochs}
+        --out-dir ${paths.checkpoint_root}/alphawise_n_ewc_obj_{item.id}_forward
+      outputs:
+        - "${paths.checkpoint_root}/alphawise_n_ewc_obj_{item.id}_forward/phase_7/learnable_wiseft_model.pth"
+
+    - name: eval
+      command: >-
+        python -m alphawise.eval.runner
+        --config configs/artifacts/objective_ablation.yaml
+        --method alphawise_n_ewc_obj_joint --method alphawise_n_ewc_obj_a2t
+        --method alphawise_n_ewc_obj_i2a --method alphawise_n_ewc_obj_i2t
+        --class-order forward
+        --pool per_phase
+        --seed 42
+        --out ${results.root}/objective_ablation/phase_curves.csv
+      inputs:
+        - "${data.eval.img_root}"
+        - "${data.eval.wav_root}"
+        - "${data.eval.meta_csv}"
+      outputs: ["${results.root}/objective_ablation/phase_curves.csv"]
+
+    - name: render
+      command: >-
+        python -m alphawise.analysis.tables results
+        --curves ${results.root}/objective_ablation/phase_curves.csv
+        --config configs/artifacts/objective_ablation.yaml
+        --out-dir ${results.root}/objective_ablation
+      inputs: ["${results.root}/objective_ablation/phase_curves.csv"]
+      outputs:
+        - "${results.root}/objective_ablation/continual_results.csv"
+        - "${results.root}/objective_ablation/continual_results.md"
+        - "${results.root}/objective_ablation/continual_results.tex"

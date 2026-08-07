@@ -1,0 +1,74 @@
+# Table 3: backward and forward transfer, from the full phase by phase evaluation matrix.
+includes: [checkpoints/registry_840.yaml]
+
+artifact:
+  id: transfer_metrics
+  paper_ref: "Table 3, continual transfer metrics"
+
+  provenance: log_verified
+  provenance_notes:
+    - "The evaluation stage needs the checkpoint set; the matrix and render stages rerun
+       offline from the curves CSV the first step writes."
+    - "Forward transfer is measured for every method against the same shared phase 0
+       bootstrap, which is why the bootstrap appears in the evaluation and is passed as
+       --bootstrap-method to the matrix stage. A per method baseline would make FWT
+       incomparable across rows."
+
+  # The row contract for the render step, read through --config.
+  methods:
+    - ewc
+    - icarl
+    - lwf
+    - alphawise_n_ewc
+    - alphawise_n_icarl
+    - alphawise_n_lwf
+
+  steps:
+    # The transfer matrix needs every (train phase, eval phase) cell, so this evaluation
+    # scores each checkpoint over all seven per phase pools, plus the bootstrap row the
+    # FWT baseline reads.
+    - name: eval_phase_matrix
+      command: >-
+        python -m alphawise.eval.runner
+        --config configs/artifacts/transfer_metrics.yaml
+        --method bootstrap
+        --method ewc --method icarl --method lwf
+        --method alphawise_n_ewc --method alphawise_n_icarl --method alphawise_n_lwf
+        --class-order forward
+        --pool per_phase
+        --seed 42
+        --out ${results.root}/transfer_metrics/phase_matrix_840.csv
+      inputs:
+        - "${paths.assets_root}/ViT_CLIP.pt"
+        - "${paths.assets_root}/ESRNXFBSP.pt"
+        - "${paths.assets_root}/bpe_simple_vocab_16e6.txt.gz"
+        - "${data.ontology}"
+        - "${data.eval.img_root}"
+        - "${data.eval.wav_root}"
+        - "${data.eval.meta_csv}"
+        - "${checkpoints.registry.forward.ewc.root}"
+        - "${checkpoints.registry.forward.icarl.root}"
+        - "${checkpoints.registry.forward.lwf.root}"
+        - "${checkpoints.registry.forward.alphawise_n_ewc.root}"
+        - "${checkpoints.registry.forward.alphawise_n_icarl.root}"
+        - "${checkpoints.registry.forward.alphawise_n_lwf.root}"
+      outputs: ["${results.root}/transfer_metrics/phase_matrix_840.csv"]
+
+    - name: transfer_matrix
+      command: >-
+        python -m alphawise.eval.transfer matrix
+        --curves ${results.root}/transfer_metrics/phase_matrix_840.csv
+        --bootstrap-method bootstrap
+        --out ${results.root}/transfer_metrics/cl_metrics.csv
+      inputs: ["${results.root}/transfer_metrics/phase_matrix_840.csv"]
+      outputs: ["${results.root}/transfer_metrics/cl_metrics.csv"]
+
+    - name: render
+      command: >-
+        python -m alphawise.analysis.tables transfer
+        --matrix ${results.root}/transfer_metrics/cl_metrics.csv
+        --config configs/artifacts/transfer_metrics.yaml
+        --out-dir ${results.root}/transfer_metrics
+      inputs: ["${results.root}/transfer_metrics/cl_metrics.csv"]
+      outputs:
+        - "${results.root}/transfer_metrics/cl_transfer_table.tex"

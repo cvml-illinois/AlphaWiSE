@@ -1,0 +1,37 @@
+# Figure 5: learned interpolation coefficient against depth, split by parameter type.
+includes: [checkpoints/registry_840.yaml]
+
+artifact:
+  id: coefficient_profile
+  paper_ref: "Figure 5, coefficient profile by depth and parameter type"
+
+  provenance: reconstructed
+  provenance_notes:
+    - "The published figure exists only as a PDF. Its inputs are 21 small coefficient
+       files, one per fused run per phase; refit the three pairs (or reuse your own runs)
+       and this figure regenerates with no GPU and no data."
+    - "The audio branch labels in the published figure read BatchNorm although the
+       architecture is GroupNorm throughout. The label is corrected here."
+    - "No coefficients ship with the repository. Point --coefficients at a directory
+       holding either <pair>_phase<k>.json/.pth files or the fusion run directories
+       themselves, placed (or symlinked) under the pair's name, for example
+       coefficients/normal_ewc -> your alphawise.fusion.fit output for that pair."
+
+  # The two knobs the renderer reads through --config.
+  profile:
+    phases: [1, 2, 3, 4, 5, 6, 7]
+    dpi: 300
+
+  steps:
+    - name: plot
+      command: >-
+        python -m alphawise.analysis.alpha_profile
+        --coefficients ${results.root}/coefficients
+        --pairs normal_lwf,normal_ewc,normal_icarl
+        --config configs/artifacts/coefficient_profile.yaml
+        --out-dir ${results.root}/coefficient_profile
+      inputs: ["${results.root}/coefficients"]
+      outputs:
+        - "${results.root}/coefficient_profile/alpha_type_depth_profile.pdf"
+        - "${results.root}/coefficient_profile/alpha_type_depth_profile.png"
+        - "${results.root}/coefficient_profile/alpha_coefficients.csv"

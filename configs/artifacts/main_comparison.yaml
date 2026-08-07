@@ -1,0 +1,109 @@
+# Table 1: eleven methods x three retrieval directions, averaged over phases and at the
+# last phase, in the 840 exemplar setting.
+includes: [checkpoints/registry_840.yaml]
+
+artifact:
+  id: main_comparison
+  paper_ref: "Table 1, continual results at 840 exemplars"
+
+  # One of log_verified or reconstructed, for the whole artifact. reconstructed means at
+  # least one number in it comes from a setting that no surviving log records.
+  provenance: reconstructed
+  provenance_notes:
+    - "The published cells were transcribed by hand from evaluation stdout; no renderer
+       emitted them. Compare a regenerated table against the published one directly;
+       third decimal disagreement between the pipeline and the transcription is expected."
+    - "Two of the three AlphaWiSE rows were fitted by a script that was edited in place
+       between runs and whose training logs did not survive. Their epoch count and batch
+       size are reconstructed; see fusion_rows."
+    - "The printed WiSE-FT (N+EWC) A2T Last Phase pair (0.2298 / 0.3128) is byte identical
+       to the same row's I2T Last Phase pair, and the published Figure 3 puts that curve
+       near 0.14 at phase 7, so the A2T copy is a demonstrable duplicate. The reference
+       keeps the printed value because the reference records what the paper prints."
+
+  # Per row provenance for the fused rows, whose settings are not recoverable from the
+  # checkpoints themselves.
+  fusion_rows:
+    alphawise_n_ewc:
+      fit: {epochs: 150, batch_size: 128}
+      provenance: reconstructed
+      evidence: "No training log for this run survives. The batch size is the current
+        default of the fitting script, corroborated by two neighbouring runs of the same
+        script over identically sized datasets whose progress bars show 13/9/8/7 batches
+        per phase, the counts implied by batch size 128."
+    alphawise_n_icarl:
+      fit: {epochs: 150, batch_size: 128}
+      provenance: log_verified
+      evidence: "The training log holds 1050 epoch lines, which is 150 epochs over 7
+        phases, and progress bars of 13/9/8/8/7/7/7 batches, the counts implied by batch
+        size 128 over fitting sets of 1680/1260/1120/1050/1008/980/960 samples."
+    alphawise_n_lwf:
+      fit: {epochs: 150, batch_size: 128}
+      provenance: reconstructed
+      evidence: "The epoch count survives only in the run directory name. No training log
+        survives and the batch size is inherited from the script default."
+
+  # The eleven rows of the published table, in its order. The render step reads this list
+  # through --config, so it is the row contract, not documentation. normal, vlwf and joint
+  # are trained by this repository but are not rows of Table 1, so they live in their own
+  # non-paper artifact rather than inflating this one.
+  methods:
+    - lwf
+    - ewc
+    - der
+    - icarl
+    - cclip
+    - wiseft_n_ewc
+    - wiseft_n_icarl
+    - wiseft_n_lwf
+    - alphawise_n_ewc
+    - alphawise_n_lwf
+    - alphawise_n_icarl
+
+  steps:
+    # One invocation, eleven methods, one CSV: the runner takes --method repeatedly and
+    # stamps each registry key into the rows it writes. Keep this flag list identical to
+    # artifact.methods above. Train phases come from each registry entry (1..7; the
+    # bootstrap is its own entry and is not a Table 1 row), and each checkpoint is scored
+    # over the phases it has seen, which is the published Average protocol.
+    - name: eval_phase_curves
+      command: >-
+        python -m alphawise.eval.runner
+        --config configs/artifacts/main_comparison.yaml
+        --method lwf --method ewc --method der --method icarl --method cclip
+        --method wiseft_n_ewc --method wiseft_n_icarl --method wiseft_n_lwf
+        --method alphawise_n_ewc --method alphawise_n_lwf --method alphawise_n_icarl
+        --class-order forward
+        --pool per_phase
+        --seed 42
+        --out ${results.root}/main_comparison/phase_curves_840.csv
+      inputs:
+        - "${paths.assets_root}/ViT_CLIP.pt"
+        - "${paths.assets_root}/ESRNXFBSP.pt"
+        - "${paths.assets_root}/bpe_simple_vocab_16e6.txt.gz"
+        - "${data.ontology}"
+        - "${data.eval.img_root}"
+        - "${data.eval.wav_root}"
+        - "${data.eval.meta_csv}"
+        - "${checkpoints.registry.forward.lwf.root}"
+        - "${checkpoints.registry.forward.ewc.root}"
+        - "${checkpoints.registry.forward.der.root}"
+        - "${checkpoints.registry.forward.icarl.root}"
+        - "${checkpoints.registry.forward.cclip.root}"
+        - "${checkpoints.registry.forward.wiseft_n_ewc.root}"
+        - "${checkpoints.registry.forward.wiseft_n_icarl.root}"
+        - "${checkpoints.registry.forward.wiseft_n_lwf.root}"
+        - "${checkpoints.registry.forward.alphawise_n_ewc.root}"
+        - "${checkpoints.registry.forward.alphawise_n_lwf.root}"
+        - "${checkpoints.registry.forward.alphawise_n_icarl.root}"
+      outputs: ["${results.root}/main_comparison/phase_curves_840.csv"]
+    - name: render
+      command: >-
+        python -m alphawise.analysis.tables results
+        --curves ${results.root}/main_comparison/phase_curves_840.csv
+        --config configs/artifacts/main_comparison.yaml
+        --out-dir ${results.root}/main_comparison
+      outputs:
+        - "${results.root}/main_comparison/continual_results.csv"
+        - "${results.root}/main_comparison/continual_results.md"
+        - "${results.root}/main_comparison/continual_results.tex"

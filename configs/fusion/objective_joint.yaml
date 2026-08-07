@@ -1,0 +1,4 @@
+# Pure overlay: apply on top of a concrete fusion config, never on its own.
+fusion:
+  fit:
+    directions: joint

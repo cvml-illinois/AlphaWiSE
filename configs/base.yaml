@@ -1,0 +1,120 @@
+# Base configuration. Every other file in configs/ is an overlay on this one.
+#
+# Every location here is either repository relative or supplied by an environment
+# variable. No site absolute path is ever committed. The environment variable names match
+# the ones alphawise/utils/paths.py already reads, so a machine that is set up for one is
+# set up for the other.
+#
+# Every key in this file is read by code. Settings that look configurable elsewhere but
+# are fixed in code on purpose (the backbone, the preprocessing, the wav id parsing, the
+# checkpoint layout) are documented as comments where their block used to be, so an
+# operator finds the truth here instead of a dead knob.
+
+paths:
+  data_root: "${env:ALPHAWISE_DATA_ROOT:-./data}"
+  assets_root: "${env:ALPHAWISE_ASSETS:-./assets}"
+  checkpoint_root: "${env:ALPHAWISE_CHECKPOINTS:-./checkpoints}"
+  bootstrap_root: "${env:ALPHAWISE_BOOTSTRAP:-${paths.checkpoint_root}/bootstrap}"
+  # Checkpoints produced outside this repository, which is where the paper's base method
+  # runs live. Kept separate so the two can be mounted from different filesystems.
+  external_checkpoint_root: "${env:ALPHAWISE_EXTERNAL_CHECKPOINTS:-${paths.checkpoint_root}/external}"
+  results_root: "${env:ALPHAWISE_RESULTS:-./results}"
+
+data:
+  root: "${paths.data_root}"
+  # AUDIOSET_* are the names the evaluation code has always read. They are kept.
+  ontology: "${env:AUDIOSET_ONT:-${paths.data_root}/ontology/ontology.json}"
+
+  train:
+    img_root: "${env:AUDIOSET_TRAIN_IMG:-${paths.data_root}/train/img}"
+    wav_root: "${env:AUDIOSET_TRAIN_WAV:-${paths.data_root}/train/wav}"
+    meta_csv: "${env:AUDIOSET_TRAIN_CSV:-${paths.data_root}/train/unbalanced_train_segments.csv}"
+
+  eval:
+    img_root: "${env:AUDIOSET_EVAL_IMG:-${paths.data_root}/eval/eval_img}"
+    wav_root: "${env:AUDIOSET_EVAL_WAV:-${paths.data_root}/eval/eval_wav}"
+    meta_csv: "${env:AUDIOSET_EVAL_CSV:-${paths.data_root}/eval/eval_segments.csv}"
+
+  # Image and audio preprocessing, the CSV column layout and the YouTube id parsing rules
+  # are fixed in alphawise/data/audioset.py rather than configured here. They are part of
+  # the published protocol, and the wav id rules in particular encode a known asymmetry
+  # the published numbers depend on; the module docstring is the honest account.
+
+continual:
+  num_phases: 8
+  classes_per_phase: 79
+  # The class order selects the class-to-phase assignment and the phase 0 bootstrap. It
+  # never selects an architecture.
+  class_order: forward
+  memory:
+    # 840 is the paper setting. 8400 is the same code path with a different number.
+    size: 840
+    balancing: false
+
+# The model has no configuration block on purpose. The architecture is fixed in
+# alphawise/models/factory.py: a tri-modal AudioCLIP whose audio branch replaces every
+# BatchNorm with GroupNorm(1, C). Running statistics have no meaning across continual
+# phases, and interpolating affine parameters whose paired statistics differ between two
+# checkpoints is undefined, so the GroupNorm variant is the only supported one and there
+# is deliberately no switch back. Backbone weights resolve as fixed basenames under
+# ${paths.assets_root} (ViT_CLIP.pt, ESRNXFBSP.pt, bpe_simple_vocab_16e6.txt.gz).
+
+train:
+  epochs: 30
+  # Global across ranks; each rank takes batch_size // world_size.
+  batch_size: 192
+
+  # Training runs unseeded unless --seed is passed to python -m alphawise.train: the
+  # published checkpoints were trained without a seed, so seeding by default would be a
+  # behaviour change relative to them.
+
+  optimizer:
+    name: sgd
+    lr: 5.0e-5
+    momentum: 0.9
+    weight_decay: 5.0e-4
+    nesterov: true
+    # Unused by sgd. Declared so that an adamw overlay is a pure edit, never an insert.
+    betas: [0.9, 0.999]
+    # Optional second parameter group holding the three temperature scalars.
+    scale_group:
+      enabled: false
+      lr: 1.0e-6
+
+  scheduler:
+    # The schedule itself is a hardcoded ExponentialLR; gamma is its one live setting.
+    gamma: 0.96
+
+  freeze:
+    partial_training: false
+    text_freeze: false
+
+  dataloader:
+    num_workers: 8
+
+  ddp:
+    backend: nccl
+    timeout_s: 7200
+    find_unused_parameters: true
+    broadcast_buffers: false
+    static_graph: false
+
+  # Checkpoints are always written to ${paths.checkpoint_root}/{method}_{class_order}/
+  # phase_{p}/model_weights_epoch_{e}.pth. The layout is fixed in code because the
+  # evaluation registry and the released weights both assume it.
+
+eval:
+  batch_size: 64
+  num_workers: 4
+  # The candidate pool the retrieval metrics are computed over. per_phase scores each
+  # phase against its own 79 classes and is the published protocol; cumulative scores
+  # against every class seen so far, a different protocol that gives different numbers.
+  pool: per_phase
+  # Below this sample count the YouTube id parser has silently dropped data, so the run
+  # aborts. A generated corpus is legitimately smaller and overrides this.
+  min_eval_samples: 7000
+  # The evaluation subset draw is seeded by the runner's --seed flag, default 42. There is
+  # no config key for it, so the seed a run used is always visible in its command line.
+
+results:
+  root: "${paths.results_root}"

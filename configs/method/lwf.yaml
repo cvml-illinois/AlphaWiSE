@@ -1,0 +1,5 @@
+method:
+  name: lwf
+  lwf:
+    temperature: 2.0
+    distill_lambda: 0.1

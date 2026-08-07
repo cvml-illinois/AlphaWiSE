@@ -1,0 +1,12 @@
+# The only fused run in the reverse class ordering. It appears in no paper table.
+# The endpoint slots come from ewc_lwf.yaml: EWC plastic, LwF stable; only the roots and
+# the ordering change here.
+includes: [fusion/ewc_lwf.yaml]
+fusion:
+  # Phase 1 was never fitted for this run.
+  phases: [2, 3, 4, 5, 6, 7]
+  source:
+    un: {root: "${checkpoints.registry.reverse.ewc.root}"}
+    reg: {root: "${checkpoints.registry.reverse.lwf.root}"}
+continual:
+  class_order: reverse

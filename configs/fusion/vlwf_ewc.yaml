@@ -1,0 +1,9 @@
+# Not a paper row. Kept because its plastic endpoint is itself a regularized method,
+# which is the ablation the design section refers to.
+includes: [fusion/_base.yaml]
+fusion:
+  source:
+    # Plastic endpoint (theta_un), multiplied by alpha: VR-LwF, regularized itself.
+    un: {method: vlwf, root: "${checkpoints.registry.forward.vlwf.root}"}
+    # Stability endpoint (theta_reg), multiplied by 1 - alpha.
+    reg: {method: ewc, root: "${checkpoints.registry.forward.ewc.root}"}

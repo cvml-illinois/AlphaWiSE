@@ -1,0 +1,4 @@
+# Sequential fine tuning with no continual learning term. This is the unregularized
+# endpoint that every fusion configuration interpolates from.
+method:
+  name: normal

@@ -1,0 +1,121 @@
+# The whole pipeline on a generated corpus, in minutes, with no AudioSet and no downloads
+# beyond the four assets.
+#
+# Every stage runs the same code the paper's artifacts run. Only the scale differs: 16
+# classes in 8 phases of 2 instead of 632 in 8 phases of 79, a 12-sample memory instead of
+# 840, and one epoch instead of thirty. A number produced here is meaningless as a result
+# and is not compared against anything; what it demonstrates is that the stages connect.
+
+paths:
+  checkpoint_root: "${results.root}/smoke/checkpoints"
+
+continual:
+  class_order: forward
+  classes_per_phase: 2
+  memory: {size: 12}
+
+train:
+  epochs: 1
+  batch_size: 4
+  dataloader: {num_workers: 0}
+
+eval:
+  # The real protocol trips a wire below 7000 evaluation samples, since that means the
+  # YouTube id parser silently dropped data. A generated corpus is legitimately smaller.
+  min_eval_samples: 8
+  batch_size: 4
+  num_workers: 0
+
+# The generated corpus, so nothing has to be exported into the environment first.
+data:
+  ontology: "${data.root}/synthetic/train/ontology.json"
+  train:
+    img_root: "${data.root}/synthetic/train/images"
+    wav_root: "${data.root}/synthetic/train/audio"
+    meta_csv: "${data.root}/synthetic/train/segments.csv"
+  eval:
+    img_root: "${data.root}/synthetic/eval/images"
+    wav_root: "${data.root}/synthetic/eval/audio"
+    meta_csv: "${data.root}/synthetic/eval/segments.csv"
+
+artifact:
+  id: smoke
+  paper_ref: "No paper artifact: an end to end check of the pipeline"
+  provenance: synthetic
+
+  # Trained per phase by the train step, and the row contract for the render step.
+  methods: [normal, ewc]
+
+  steps:
+    - name: corpus
+      command: >-
+        python -m alphawise.data.synthetic
+        --out ${data.root}/synthetic --classes 16 --per-class 6 --seed 42
+      outputs: ["${data.root}/synthetic/train/segments.csv",
+                "${data.root}/synthetic/eval/segments.csv"]
+
+    # --from-backbone is the smoke-only deviation: the synthetic protocol trains no
+    # phase 0, so phase 1 legitimately starts from the pretrained backbone. On the real
+    # protocol the same condition is an error.
+    - name: train
+      foreach: methods
+      command: >-
+        python -m alphawise.train
+        --config configs/artifacts/smoke.yaml
+        --method {item} --class-order forward --phases 1
+        --seed 42 --from-backbone
+        --checkpoint-root ${paths.checkpoint_root}
+      outputs: ["${paths.checkpoint_root}/{item}_forward/phase_1/model_weights_epoch_1.pth"]
+
+    - name: fit
+      command: >-
+        python -m alphawise.fusion.fit
+        --config configs/artifacts/smoke.yaml --config configs/fusion/normal_ewc.yaml
+        --phases 1
+        --out-dir ${paths.checkpoint_root}/alphawise_n_ewc_forward
+        --set fusion.source.un.root=${paths.checkpoint_root}/normal_forward
+        --set fusion.source.reg.root=${paths.checkpoint_root}/ewc_forward
+        --set fusion.source.filename=model_weights_epoch_1.pth
+        --set fusion.fit.epochs=2 --set fusion.fit.batch_size=4
+        --set fusion.data.memory_size=12 --set fusion.data.seed=42
+      outputs: ["${paths.checkpoint_root}/alphawise_n_ewc_forward/phase_1/learned_alphas.pth"]
+
+    - name: eval
+      command: >-
+        python -m alphawise.eval.runner
+        --config configs/artifacts/smoke.yaml
+        --method normal --method ewc --method alphawise_n_ewc
+        --class-order forward
+        --pool per_phase
+        --seed 42
+        --out ${results.root}/smoke/phase_curves.csv
+      outputs: ["${results.root}/smoke/phase_curves.csv"]
+
+    # --bootstrap-method none: the smoke protocol trains no phase 0, so it forgoes the
+    # FWT baseline; every other consistency check still applies.
+    - name: validate_transfer
+      command: >-
+        python -m alphawise.eval.transfer validate
+        --curves ${results.root}/smoke/phase_curves.csv
+        --bootstrap-method none
+      outputs: []
+
+    - name: render
+      command: >-
+        python -m alphawise.analysis.tables results
+        --curves ${results.root}/smoke/phase_curves.csv
+        --config configs/artifacts/smoke.yaml
+        --out-dir ${results.root}/smoke
+      outputs:
+        - "${results.root}/smoke/continual_results.csv"
+        - "${results.root}/smoke/continual_results.md"
+        - "${results.root}/smoke/continual_results.tex"
+
+# The smoke corpus is regenerated on every run, so there is nothing stable to compare
+# against and --verify checks that each stage produced its declared outputs instead.
+checkpoints:
+  registry:
+    forward:
+      normal: {root: "${paths.checkpoint_root}/normal_forward", filename: model_weights_epoch_1.pth, phases: [1]}
+      ewc: {root: "${paths.checkpoint_root}/ewc_forward", filename: model_weights_epoch_1.pth, phases: [1]}
+      alphawise_n_ewc: {root: "${paths.checkpoint_root}/alphawise_n_ewc_forward", filename: learnable_wiseft_model.pth, phases: [1]}

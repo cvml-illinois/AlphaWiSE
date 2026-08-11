@@ -5,7 +5,7 @@ protocol, so its curves CSV already holds the full transfer matrix R[k][j]: the 
 checkpoint's score on phase j, over the same candidate pool as every other published
 number. This module only rearranges those cells; it never loads a model.
 
-Definitions are those of the ancestor tree's ``summarize_transfer_matrix.py``,
+Definitions are those of the ancestor tree's transfer-matrix summary script,
 unchanged, with T the last task phase:
 
     Avg    = (1/T)     sum_{j=1..T}   R[T][j]

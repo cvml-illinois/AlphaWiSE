@@ -30,5 +30,6 @@ them and verifies their checksums.
 ## Dataset
 
 AudioSet is distributed by Google as metadata referencing YouTube videos, under CC BY 4.0 for the
-annotations. The audio and video are not redistributable, so this repository ships the segment
-manifests that define the benchmark splits and a downloader, never media. See `docs/data.md`.
+annotations. The audio and video are not redistributable, so no media ships with this repository:
+you assemble a copy once and point the pipeline at it. The benchmark splits are derived in code
+from the ontology and the segment CSVs. See `data/README.md`.

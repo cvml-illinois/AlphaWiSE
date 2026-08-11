@@ -7,20 +7,18 @@ pool (the non-cascading eval pool):
     I->T   image query, class-text candidates
     I->A   image query, per-sample audio bank, relevance = shared label
 
-This is a refactor of ``_import/test/stats/triclip_eval.py``, which is itself a
-byte-equivalent port of the reference loops in
-``TriCLIP/scripts/run_phases_audioSet_eval.py`` (:65-155 A->T, :187-251 I->T,
-:291-386 I->A). The numerics are load-bearing and are reproduced operation for
-operation, including two things that would otherwise look like defects:
+This is a refactor of the pre-release evaluation module, itself a byte-equivalent
+port of the reference retrieval loops that produced the published numbers. The
+numerics are load-bearing and are reproduced operation for operation, including
+two things that would otherwise look like defects:
 
 * the softmax before the argmax in the two text directions. It is monotonic, so it
   cannot change R@1, but it is kept so the published numbers stay reproducible;
 * mAP averages per-query AP only over queries with at least one relevant candidate,
   and I->A skips a query whose audio bank contains no relevant item at all.
 
-The six-key per-phase aggregation and the average over seen phases descend from
-``_import/test/stats/eval_table7.py:115-138`` and
-``_import/test/eval_metrics.py:256-290``.
+The six-key per-phase aggregation and the average over seen phases descend from the
+pre-release aggregation and metric modules.
 """
 
 from typing import Iterable, Mapping, NamedTuple

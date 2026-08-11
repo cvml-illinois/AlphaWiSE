@@ -5,13 +5,13 @@ Both are implemented correctly here, and both default to the inert behaviour so 
 published numbers stay reproducible. Turn either on and the iCaRL rows change.
 
 1. ``legacy_memory=True`` (default). The dev tree called the memory update with the model
-   in the place of the memory object (icarl_par_train.py:391), so every call raised
+   in the place of the memory object, so every call raised
    ``AttributeError: 'DistributedDataParallel' object has no attribute 'per_class_size'``
    into a bare ``except`` that printed and continued. The exemplar bank was never written.
    Confirmed in the run logs, one such line per phase.
 
 2. ``legacy_distillation=True`` (default). The distillation term was guarded by
-   ``isinstance(logits, torch.Tensor)`` (icarl_par_train.py:277), but the backbone returns
+   ``isinstance(logits, torch.Tensor)``, but the backbone returns
    a three-tuple of similarity matrices, so the guard was never satisfied. Confirmed in
    the run logs: ``Distill: 0.000000`` for all 30 epochs of every phase, including the
    phases that had a teacher.

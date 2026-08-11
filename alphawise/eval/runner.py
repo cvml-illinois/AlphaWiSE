@@ -1,8 +1,8 @@
 """Evaluate registered checkpoints over the full phase grid and write one curves CSV.
 
-Descends from the ancestor tree's ``eval_table7.py`` (``_load_model``,
-``_eval_checkpoint``), ``eval_840.py`` (checkpoint resolution) and
-``eval_transfer_matrix.py`` (one row per evaluated cell).
+Descends from the ancestor tree's table-evaluation script (checkpoint loading and
+scoring), its checkpoint-resolution logic, and its transfer-matrix sweep (one row
+per evaluated cell).
 
 The output is long form, one row per (method, train phase, eval phase) cell, and every
 train phase is scored on every phase of the protocol. The cells with

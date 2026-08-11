@@ -23,11 +23,11 @@ artifact:
         python -m alphawise.analysis.curves
         --curves ${results.root}/main_comparison/phase_curves_840.csv
         --out-dir ${results.root}/retention_curves
-        --basename 840_paper
+        --basename retention_840
         --class-order forward
       inputs: ["${results.root}/main_comparison/phase_curves_840.csv"]
       outputs:
-        - "${results.root}/retention_curves/840_paper_r1.pdf"
-        - "${results.root}/retention_curves/840_paper_r1.png"
-        - "${results.root}/retention_curves/840_paper_map.pdf"
-        - "${results.root}/retention_curves/840_paper_map.png"
+        - "${results.root}/retention_curves/retention_840_r1.pdf"
+        - "${results.root}/retention_curves/retention_840_r1.png"
+        - "${results.root}/retention_curves/retention_840_map.pdf"
+        - "${results.root}/retention_curves/retention_840_map.png"

@@ -555,7 +555,7 @@ class _ESResNet(ResNetWithAttention):
 
         err_msg = ''
         try:
-            # Changed from true to false (So I can Load AudioSet model)
+            # strict=False: the AudioSet-pretrained checkpoint omits the fc head
             self.load_state_dict(state_dict=state_dict, strict=False)
         except RuntimeError as ex:
             err_msg += f'While loading some errors occurred.\n{ex}'

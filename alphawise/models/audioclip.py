@@ -111,7 +111,7 @@ class AudioCLIP(CLIP):
             bn_to_ln(self.audio)
             print(self.audio)
 
-        print("Loaded pretrained ESResNEXT weights for audio head (From Independent Training)...")
+        print("Loaded pretrained audio-encoder weights")
 
         self.multilabel = multilabel
         self.pretrained = pretrained
@@ -129,22 +129,15 @@ class AudioCLIP(CLIP):
                 self.load_state_dict(my_weights["model_state_dict"], strict=True)
                 print("Loading Trained Weights ... ")
         elif self.pretrained:
-            print("Doen't every reach here (will error)")
-            ## Doen't every reach here (will error)
             self.load_state_dict(torch.load(
                 asset('CLIP.pt'),
                 map_location='cpu'
             ), strict=False)
             print('Image & Text weights loaded')
-            # try:
-            # Pretraining of AudioSet (Always supposed to this)
             self.audio.load_state_dict(torch.load(
                 asset('ESRNXFBSP.pt'),
                 map_location='cpu'
             ), strict=False)
-            # except RuntimeError as ex:
-            #     print(ex)
-            #     print('Audio weights loaded')
         else:
             if clip_model_pth:
                 print("Loading Full ViT Clip weights (for Visual and Text)")
@@ -158,7 +151,6 @@ class AudioCLIP(CLIP):
                     map_location='cpu'
                 ), strict=False)
             print('Image & Text weights loaded')
-            print("You need to make scripts to cooperatively train the Audio Head")
 
         self.embed_dim = embed_dim
 

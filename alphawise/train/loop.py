@@ -179,7 +179,7 @@ def build_optimizer(param_groups, config):
 
 
 def _flatten_eval(evaluation):
-    """Evaluation output to flat metric keys, matching the historical W&B layout."""
+    """Evaluation output to flat metric keys, matching the historical logging layout."""
     metrics = {}
     for phase, per_metric in evaluation.get("per_phase", {}).items():
         for key, value in per_metric.items():
@@ -221,8 +221,8 @@ def _train_batch(ctx, model, optimizer, method, raw_batch):
 
     total.backward()
     # step()'s positional argument is a loss-reevaluation closure. The dev tree's LwF
-    # trainer passed None into it explicitly (lwf_par_train.py:157); that is the default,
-    # so it was harmless, but it reads as though a closure had been intended.
+    # trainer passed None into it explicitly; that is the default, so it was harmless,
+    # but it reads as though a closure had been intended.
     optimizer.step()
 
     scalars = {"epoch_loss": float(total), "base_loss": float(base_loss)}
@@ -263,10 +263,9 @@ def run_phase(model, train_loader, checkpoint_dir, config=None, method=None, sam
 
     if dist.is_master():
         # The banner states only what the loop can observe. Its predecessor announced
-        # "exemplar training" unconditionally (par_train.py:42), including for joint
-        # training, which uses no replay at all; the dataset layer had the same message
-        # inverted outright, printing "Training with exemplers" from the branch that
-        # omits them (audioSet.py:366-369).
+        # "exemplar training" unconditionally, including for joint training, which uses
+        # no replay at all; the dataset layer had the same message inverted outright,
+        # announcing exemplar replay from the branch that omits it.
         scope = "all classes" if phase is None else f"phase {phase}"
         print(f"=== {method.name} | {class_order} | {scope} | {len(train_loader.dataset)} "
               f"training samples | bootstrap = {resume_ckpt} ===", flush=True)

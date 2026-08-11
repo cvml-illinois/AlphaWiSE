@@ -11,8 +11,8 @@ so the registry gives it a different default and no second implementation.
 
 import copy
 
-# The dev tree's LwF trainer also imported torch.distributed and never used it
-# (lwf_par_train.py:6). Distributed concerns belong to the loop, so no method imports it.
+# The dev tree's LwF trainer also imported torch.distributed and never used it.
+# Distributed concerns belong to the loop, so no method imports it.
 import torch
 import torch.nn.functional as F
 

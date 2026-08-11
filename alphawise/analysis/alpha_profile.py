@@ -168,8 +168,7 @@ def read_alphas(path: str | Path) -> dict[str, float]:
 
     ``"beta"`` wins over ``"alphas"`` when both are present, because the release fitter
     writes both and its ``"alphas"`` are already through the sigmoid; reading them here
-    would apply it twice, the defect that once drifted every published coefficient
-    toward 0.5. Keys are normalised to the ``"#"`` encoding the shipped files use, so
+    would apply it twice, a defect that drifts every coefficient toward 0.5. Keys are normalised to the ``"#"`` encoding the shipped files use, so
     :func:`classify_alpha_key` sees one spelling whatever the source format.
     """
     path = Path(path)

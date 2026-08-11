@@ -16,8 +16,8 @@
 checkpoints:
   # New method keys are added here, not in base.yaml, so overrides may create them.
   __open__: true
-  # The filename the fused runs were released under. It predates the AlphaWiSE name and is
-  # kept verbatim because it matches the released fused checkpoints on disk.
+  # The filename the released fused checkpoints use on disk; kept verbatim so the
+  # registry matches them.
   alphawise_filename: learnable_wiseft_model.pth
   registry:
     forward:

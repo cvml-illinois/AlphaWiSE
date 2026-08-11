@@ -2,8 +2,8 @@
 
 The renderers, the evaluators and the configs used to carry private copies of the
 method list, the retrieval-direction spellings and the transfer-table row mapping,
-and the copies drifted: three published WiSE-FT rows once rendered as dashes
-because the table renderer keyed them differently from the checkpoint registry.
+and the copies could drift: a renderer that keys a method differently from the
+checkpoint registry silently renders its rows as dashes.
 Both sides of every such seam now import from here, so a disagreement is an
 ImportError or a KeyError instead of a silently empty row.
 

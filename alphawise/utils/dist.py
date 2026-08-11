@@ -22,8 +22,8 @@ def is_distributed():
 def get_rank():
     """This process's rank in the process group, 0 when there is no process group."""
     # The dev tree called dist.get_rank() and dist.barrier() with no is_initialized()
-    # guard (par_train.py:159,163; delta_der_par_train.py:487), so any run outside
-    # torchrun died at the first checkpoint with "process group is not initialized".
+    # guard, so any run outside torchrun died at the first checkpoint with
+    # "process group is not initialized".
     return dist.get_rank() if is_distributed() else 0
 
 

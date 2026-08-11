@@ -1,6 +1,6 @@
 """Checkpoint loading and subset encoding for the embedding-space analyses.
 
-This is a refactor of ``_import/triclip/scripts/create_tsne_it.py`` (``load_model``,
+This is a refactor of the pre-release t-SNE script (``load_model``,
 ``extract_pair_embeddings``), ported so nothing under ``_import/`` is executed. It
 turns an :class:`~alphawise.eval.subset.EvalSubset` into per-modality embedding
 arrays: one row per sample for image and audio, one row per class for text, plus an

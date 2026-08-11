@@ -10,8 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
-  { name = "Qiran Hu" },
-  { name = "Sarthak Jain" },
+  { name = "Anonymous" },
 ]
 classifiers = [
   "Programming Language :: Python :: 3.11",
@@ -63,10 +62,6 @@ analysis = ["matplotlib>=3.7", "scikit-learn>=1.3"]
 wandb = ["wandb>=0.16"]
 dev = ["ruff>=0.4"]
 all = ["alphawise[analysis,wandb]"]
-
-[project.urls]
-Repository = "https://github.com/cvml-illinois/AlphaWiSE"
-Issues = "https://github.com/cvml-illinois/AlphaWiSE/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]

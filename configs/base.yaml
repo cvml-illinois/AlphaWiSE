@@ -47,7 +47,7 @@ continual:
   # never selects an architecture.
   class_order: forward
   memory:
-    # 840 is the paper setting. 8400 is the same code path with a different number.
+    # 840 is the paper setting. Any other budget is the same code path with a different number.
     size: 840
     balancing: false
 

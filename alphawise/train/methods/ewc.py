@@ -112,7 +112,7 @@ class EWCMethod(ContinualMethod):
         return {"ewc_penalty": self.scaling * penalty}
 
     def checkpoint_extras(self, ctx):
-        """Fisher and anchor, under the dev tree's key names (``ewc_par_train.py:190``).
+        """Fisher and anchor, under the dev tree's key names.
 
         Nothing in the release reads them back; a resumed phase re-estimates the Fisher or
         reuses the cache file, so these keys exist for inspection and for compatibility with

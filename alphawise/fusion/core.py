@@ -136,8 +136,8 @@ class TensorWiseInterpolation(nn.Module):
 
         The reference implementation bucketed only transformer-block parameters, so its
         summaries silently described 483 of the 499 coefficients. Every key is counted here
-        and the total is asserted, which is why these numbers differ from the historical
-        ``alpha_summary.txt`` files.
+        and the total is asserted, which is why these numbers differ from the summaries
+        the pre-release implementation produced.
         """
         per_branch: dict = {branch: [] for branch in COEFFICIENTS_PER_BRANCH}
         for name, alpha in self.alphas().items():

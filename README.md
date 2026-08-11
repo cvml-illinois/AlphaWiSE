@@ -71,7 +71,7 @@ newer NumPy shadowing the one torchvision was compiled against fails at import w
 each is recorded next to it in [pyproject.toml](pyproject.toml).
 
 ```bash
-git clone https://github.com/cvml-illinois/AlphaWiSE.git && cd AlphaWiSE
+cd AlphaWiSE
 pip install -e .
 python scripts/fetch_assets.py
 ```

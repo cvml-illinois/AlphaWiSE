@@ -3,7 +3,8 @@
 One dataset covers every configuration the development tree spread over ten
 near-duplicate classes: forward or reverse class order, train or eval split, any phase
 index, any exemplar budget, exemplars on or off. The exemplar budget is a plain number,
-so 840 (the paper setting) and 8400 are the same code path with a different value.
+so 840 (the paper setting) and any larger budget are the same code path with a
+different value.
 
 Three orderings are load-bearing and must not be "tidied":
 
@@ -329,8 +330,8 @@ class ContinualAudioSet(torch.utils.data.Dataset):
             pool and never injects exemplars.
         class_order: "forward" or "reverse". It selects which ontology partition a step
             trains on, nothing else.
-        memory_size: exemplar budget. 840 is the paper setting; any other value, 8400
-            included, is the same code path.
+        memory_size: exemplar budget. 840 is the paper setting; any other value is the
+            same code path.
         include_exemplars: append the replay buffer to the phase's samples. The buffer is
             built either way and stays available as `.exemplars`.
         balancing: pool the buffer per label instead of taking each phase's first slice.

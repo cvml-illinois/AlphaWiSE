@@ -14,8 +14,8 @@ scores once more:
 Row set, row order, class orders, column-group order and the phase window come
 from the artifact config where it declares them and from :mod:`alphawise.naming`
 otherwise. A method the config declares but the curves CSV does not carry raises
-instead of rendering an empty row: a silent dash once cost Table 1 three published
-rows and three bold cells.
+instead of rendering an empty row: a silent dash would drop rows and their bold
+cells from Table 1 without warning.
 
 **Transfer table** (from the continual-learning measures CSV): backward and forward
 transfer for all three retrieval directions. Reporting every direction removes the

@@ -36,6 +36,5 @@ wandb/
 .vscode/
 *.swp
 
-# Verbatim source snapshot used as a diff reference during the rebuild.
-# Never committed: it carries cluster paths and author names. Deleted before release.
+# Verbatim source snapshot used as a diff reference during the rebuild; never committed.
 _import/

@@ -1,6 +1,6 @@
 """The small per-class evaluation subset the embedding-space analyses draw on.
 
-This is a refactor of the subset drawing in ``_import/triclip/scripts/create_tsne_it.py``
+This is a refactor of the subset drawing in the pre-release t-SNE script
 (``build_eval_subset``), ported so nothing under ``_import/`` is executed. Given the raw
 media roots it pairs every eval image with its wav by the 11-character YouTube id
 (``basename[:11]``, the eval-split naming convention), buckets the pairs by ontology
